@@ -1,10 +1,14 @@
 Name: pcre
 Version: 7.8
-Release: 3.1%{?dist}
+Release: 4%{?dist}
 Summary: Perl-compatible regular expression library
 URL: http://www.pcre.org/
 Source: ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/%{name}-%{version}.tar.bz2
 Patch0: pcre-7.3-multilib.patch
+# In upstream, bugs #676636, #676643
+Patch1: pcre-8.12-manual_typos.patch
+# Refused by upstream, bug #676636
+Patch2: pcre-8.12-refused_spelling_terminated.patch
 License: BSD
 Group: System Environment/Libraries
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
@@ -35,6 +39,8 @@ Library for static linking for %{name}.
 %prep
 %setup -q
 %patch0 -p1 -b .multilib
+%patch1 -p0 -b .manual_typos
+%patch2 -p1 -b .terminated_typos
 
 %build
 %configure --enable-utf8 --enable-unicode-properties
@@ -95,8 +101,14 @@ rm -rf $RPM_BUILD_ROOT
 %files static
 %defattr(-,root,root)
 %{_libdir}/*.a
+%doc COPYING LICENCE
 
 %changelog
+* Tue Jan 10 2012 Petr Pisar <ppisar@redhat.com> - 7.8-4
+- Add license files to static subpackage (Resolves: #613690)
+- Fix typos in pcretest(1) manual page (Resolves: #676636)
+- Fix typos in pcregrep(1) manual page (Resolves: #676643)
+
 * Mon Nov 30 2009 Dennis Gregorovic <dgregor@redhat.com> - 7.8-3.1
 - Rebuilt for RHEL 6
 
