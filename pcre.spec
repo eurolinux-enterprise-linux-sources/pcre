@@ -1,6 +1,6 @@
 Name: pcre
 Version: 7.8
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: Perl-compatible regular expression library
 URL: http://www.pcre.org/
 Source: ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/%{name}-%{version}.tar.bz2
@@ -17,6 +17,10 @@ Patch4: pcre-7.8-fix_spelling_formfeed_runtime_whitespace.patch
 Patch5: pcre-7.8-forward_reference.patch
 # In upstream 8.21, bug #759475
 Patch6: pcre-7.8-Fix-caseless-match-if-cases-differ-in-encoding-lengt.patch
+# In upstream 8.11, bug #1193524
+Patch7: pcre-7.8-Test-for-ridiculous-values-of-starting-offsets.patch
+# In upstream 8.13, bug #1193524
+Patch8: pcre-7.8-Pass-back-detailed-info-when-UTF-8-check-fails-at-ru.patch
 License: BSD
 Group: System Environment/Libraries
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
@@ -53,6 +57,8 @@ Library for static linking for %{name}.
 %patch4 -p1 -b .formfeed_runtime_whitespace
 %patch5 -p1 -b .forward_reference
 %patch6 -p1 -b .cases_differ_in_length
+%patch7 -p1
+%patch8 -p1 -b .detailed_error_on_bad_utf8
 
 %build
 %configure --enable-utf8 --enable-unicode-properties
@@ -116,6 +122,12 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING LICENCE
 
 %changelog
+* Thu Feb 26 2015 Petr Pisar <ppisar@redhat.com> - 7.8-7
+- Check starting offest for pointing into a subject string
+  (Resolves: #1193524)
+- Pass back detailed error when UTF-8 check fails at runtime
+  (Resolves: #1193524)
+
 * Wed Sep 05 2012 Petr Pisar <ppisar@redhat.com> - 7.8-6
 - Fix repeated forward reference needing a character (Resolves: #756105)
 - Fix caseless match if cases differ in encoding length (Resolves: #759475)
