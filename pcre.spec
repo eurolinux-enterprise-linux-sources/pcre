@@ -1,6 +1,6 @@
 Name: pcre
 Version: 7.8
-Release: 4%{?dist}
+Release: 6%{?dist}
 Summary: Perl-compatible regular expression library
 URL: http://www.pcre.org/
 Source: ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/%{name}-%{version}.tar.bz2
@@ -9,6 +9,14 @@ Patch0: pcre-7.3-multilib.patch
 Patch1: pcre-8.12-manual_typos.patch
 # Refused by upstream, bug #676636
 Patch2: pcre-8.12-refused_spelling_terminated.patch
+# Reintroduce RE::Init(const char*) to restore ABI with pcre-6, bug #842000
+Patch3: pcre-7.8-cpp-re-init-v6.patch
+# In upstream, bug #799003
+Patch4: pcre-7.8-fix_spelling_formfeed_runtime_whitespace.patch
+# In upstream 8.21, bug #756105
+Patch5: pcre-7.8-forward_reference.patch
+# In upstream 8.21, bug #759475
+Patch6: pcre-7.8-Fix-caseless-match-if-cases-differ-in-encoding-lengt.patch
 License: BSD
 Group: System Environment/Libraries
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
@@ -41,6 +49,10 @@ Library for static linking for %{name}.
 %patch0 -p1 -b .multilib
 %patch1 -p0 -b .manual_typos
 %patch2 -p1 -b .terminated_typos
+%patch3 -p1 -b .re_init
+%patch4 -p1 -b .formfeed_runtime_whitespace
+%patch5 -p1 -b .forward_reference
+%patch6 -p1 -b .cases_differ_in_length
 
 %build
 %configure --enable-utf8 --enable-unicode-properties
@@ -104,6 +116,16 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING LICENCE
 
 %changelog
+* Wed Sep 05 2012 Petr Pisar <ppisar@redhat.com> - 7.8-6
+- Fix repeated forward reference needing a character (Resolves: #756105)
+- Fix caseless match if cases differ in encoding length (Resolves: #759475)
+
+* Thu Aug 23 2012 Petr Pisar <ppisar@redhat.com> - 7.8-5
+- Reintroduce RE::Init(const char*) to restore ABI with pcre-6
+  (Resolves: #842000)
+- Fix spelling formfeed, runtime, whitespace in manual pages
+  (Resolves: #799003)
+
 * Tue Jan 10 2012 Petr Pisar <ppisar@redhat.com> - 7.8-4
 - Add license files to static subpackage (Resolves: #613690)
 - Fix typos in pcretest(1) manual page (Resolves: #676636)
