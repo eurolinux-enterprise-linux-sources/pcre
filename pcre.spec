@@ -2,7 +2,7 @@
 #%%global rcversion RC1
 Name: pcre
 Version: 8.32
-Release: %{?rcversion:0.}12%{?rcversion:.%rcversion}%{?dist}
+Release: %{?rcversion:0.}14%{?rcversion:.%rcversion}%{?dist}
 %global myversion %{version}%{?rcversion:-%rcversion}
 Summary: Perl-compatible regular expression library
 Group: System Environment/Libraries
@@ -26,6 +26,9 @@ Patch5: pcre-8.33-RC1-Fix-pcretest-crash-with-a-data-line-longer-than-6553.patch
 Patch6: pcre-8.33-RC1-Fix-segfault-when-pcre_dfa_exec-is-called-with-an-ou.patch
 # Fix jitted range check, in upstream after 8.34, bug #1048101
 Patch7: pcre-8.34-Fix-range-check-in-JIT-path.patch
+# Fix unused memory usage on zero-repeat assertion condition, bug #1169797,
+# CVE-2014-8964, in upstream after 8.36
+Patch8: pcre-8.32-Fix-zero-repeat-assertion-condition-bug.patch
 BuildRequires: readline-devel
 # New libtool to get rid of rpath
 BuildRequires: autoconf, automake, libtool
@@ -73,6 +76,7 @@ Utilities demonstrating PCRE capabilities like pcregrep or pcretest.
 %patch5 -p1 -b .pcretest_grow_buffer
 %patch6 -p1 -b .vector_size
 %patch7 -p1 -b .jitted_range_check
+%patch8 -p1 -b .zero_repeat_assertion
 # Because of rpath patch
 libtoolize --copy --force && autoreconf -vif
 # One contributor's name is non-UTF-8
@@ -83,15 +87,14 @@ for F in ChangeLog; do
 done
 
 %build
+# There is an explicit request to optimize PCRE more, bugs #1051072, #1123498
+%global _performance_build 1
 %ifarch ppc64
 # There is a strict-aliasing problem on PPC64, bug #881232
 %global optflags %{optflags} -fno-strict-aliasing
-# There is an explicit request to optimize PCRE more, bug #1051072
-%global optflags %(printf '%s' '%{optflags}' | \
-    sed -r 's/(^|[[:space:]])-O[012]([[:space:]]|$)/\\1-O3\\2/')
 %endif
 %configure \
-%ifarch aarch64 s390 s390x sparc64 sparcv9
+%ifarch aarch64 ppc64le s390 s390x sparc64 sparcv9
     --disable-jit \
 %else
     --enable-jit \
@@ -112,7 +115,7 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/pcre
 # larger stack is needed on s390, ppc
 ulimit -s 10240
 %endif
-make check
+make check VERBOSE=yes
 
 %post -p /sbin/ldconfig
 
@@ -143,6 +146,15 @@ make check
 %{_mandir}/man1/pcretest.*
 
 %changelog
+* Tue Dec 02 2014 Petr Pisar <ppisar@redhat.com> - 8.32-14
+- Fix CVE-2014-8964 (unused memory usage on zero-repeat assertion condition)
+  (bug #1169797)
+
+* Fri Aug 01 2014 Petr Pisar <ppisar@redhat.com> - 8.32-13
+- Disable unsupported JIT mode on little-endian 64-bit PowerPC platform
+  (bug #1125642)
+- Raise optimization level to 3 on little-endian 64-bit PowerPC (bug #1123498)
+
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 8.32-12
 - Mass rebuild 2014-01-24
 
