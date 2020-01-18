@@ -2,7 +2,7 @@
 #%%global rcversion RC1
 Name: pcre
 Version: 8.32
-Release: %{?rcversion:0.}15%{?rcversion:.%rcversion}%{?dist}.1
+Release: %{?rcversion:0.}17%{?rcversion:.%rcversion}%{?dist}
 %global myversion %{version}%{?rcversion:-%rcversion}
 Summary: Perl-compatible regular expression library
 Group: System Environment/Libraries
@@ -47,41 +47,55 @@ Patch12: pcre-8.32-Fix-compiler-crash-misbehaviour-for-zero-repeated-gr.patch
 Patch13: pcre-8.32-Fix-bug-when-there-are-unset-groups-prior-to-ACCEPT-.patch
 # Fix static linking, bug #1217111, in upstream after 8.37-RC1
 Patch14: pcre-8.37-RC1-Fix-static-linking-issue-with-pkg-config.patch
-# Fix checking whether a group could match an empty string, bug #1330508,
+# Fix checking whether a group could match an empty string, bug #1330509,
 # in upstream after 8.33, needed for
 # Fix-compile-time-loop-for-recursive-reference-within.patch
 Patch15: pcre-8.32-Fix-checking-whether-a-group-could-match-an-empty-st.patch
 # Fix CVE-2015-2328 (infinite recursion compiling pattern with recursive
-# reference in a group with indefinite repeat), bug #1330508,
+# reference in a group with indefinite repeat), bug #1330509,
 # upstream bug #1515, in upstream after 8.35
 Patch16: pcre-8.32-Fix-compile-time-loop-for-recursive-reference-within.patch
-# Fix duplicate names memory calculation error, bug #1330508,
+# Fix duplicate names memory calculation error, bug #1330509,
 # in upstream after 8.37,
 # needed for Fix-buffer-overflow-for-named-references-in-situatio.patch
 Patch17: pcre-8.32-Fix-duplicate-names-memory-calculation-error.patch
 # Fix named forward reference to duplicate group number overflow bug,
-# bug #1330508, in upstream after 8.37,
+# bug #1330509, in upstream after 8.37,
 # needed for Fix-buffer-overflow-for-named-references-in-situatio.patch
 Patch18: pcre-8.32-Fix-named-forward-reference-to-duplicate-group-numbe.patch
 # Fix CVE-2015-8385 (buffer overflow caused by named forward reference to
-# duplicate group number), bug #1330508, in upstream after 8.37
+# duplicate group number), bug #1330509, in upstream after 8.37
 Patch19: pcre-8.32-Fix-buffer-overflow-for-named-references-in-situatio.patch
 # Fix CVE-2015-8386 (buffer overflow caused by lookbehind assertion),
-# bug #1330508, in upstream after 8.37
+# bug #1330509, in upstream after 8.37
 Patch20: pcre-8.32-Fix-buffer-overflow-for-lookbehind-within-mutually-r.patch
 # Fix CVE-2015-3217 (stack overflow caused by mishandled group empty match),
-# bug #1330508, in upstream after 8.37
+# bug #1330509, in upstream after 8.37
 Patch21: pcre-8.32-Fix-group-empty-match-bug.patch
 # Fix CVE-2015-5073 and CVE-2015-8388 (buffer overflow for forward reference
-# within backward assertion with excess closing parenthesis), bug #1330508,
+# within backward assertion with excess closing parenthesis), bug #1330509,
 # in upstream after 8.37
 Patch22: pcre-8.32-Fix-buffer-overflow-for-forward-reference-within-bac.patch
 # Fix CVE-2015-8391 (inefficient posix character class syntax check),
-# bug #1330508, in upstream after 8.37
+# bug #1330509, in upstream after 8.37
 Patch23: pcre-8.32-Fix-run-for-ever-bug-for-deeply-nested-sequences.patch
 # Fix CVE-2016-3191 (workspace overflow for (*ACCEPT) with deeply nested
-# parentheses), bug #1330508, in upstream after 8.38
+# parentheses), bug #1330509, in upstream after 8.38
 Patch24: pcre-8.32-Fix-workspace-overflow-for-ACCEPT-with-deeply-nested.patch
+# 1/3 Let [:graph:], [:print:], and [:punct:] POSIX classes to handle Unicode
+# characters in UCP mode to match Perl behavior, bug #1400267,
+# in upstream 8.34
+Patch25: pcre-8.32-Update-POSIX-class-handling-in-UCP-mode.patch
+# 2/3 Let [:graph:], [:print:], and [:punct:] POSIX classes to handle Unicode
+# characters in UCP mode with JIT, bug #1400267, in upstream 8.34
+Patch26: pcre-8.32-Add-support-for-PT_PXGRAPH-PT_PXPRINT-and-PT_PXPUNCT.patch
+# 3/3 Fix XCLASS POSIX JIT compilation, tests failed on 32-bit PowerPC,
+# bug #1400267, in upstream 8.34
+Patch27: pcre-8.34-RC1-Fix-XCLASS-POSIX-types-in-JIT.patch
+# Fix matching Unicode ranges in JIT mode, bug #1402288, in upstream 8.35
+Patch28: pcre-8.32-A-new-flag-is-set-when-property-checks-are-present-i.patch
+# git required for A-new-flag-is-set-when-property-checks-are-present-i.patch
+BuildRequires: git
 BuildRequires: readline-devel
 # New libtool to get rid of rpath
 BuildRequires: autoconf, automake, libtool
@@ -146,6 +160,11 @@ Utilities demonstrating PCRE capabilities like pcregrep or pcretest.
 %patch22 -p1 -b .CVE-2015-5073
 %patch23 -p1 -b .deeply_nested_bracket_colon
 %patch24 -p1 -b .accept_with_nested_parentheses
+%patch25 -p1 -b .posix_classes_in_ucp
+%patch26 -p1 -b .posix_classes_in_ucp_jit
+%patch27 -p1 -b .posix_classes_in_ucp_jit_types
+# Apply a Git binary patch
+git --work-tree=. apply %{PATCH28}
 # Because of rpath patch
 libtoolize --copy --force && autoreconf -vif
 # One contributor's name is non-UTF-8
@@ -215,21 +234,26 @@ make check VERBOSE=yes
 %{_mandir}/man1/pcretest.*
 
 %changelog
-* Wed Apr 27 2016 Petr Pisar <ppisar@redhat.com> - 8.32-15.1
+* Tue Dec 06 2016 Petr Pisar <ppisar@redhat.com> - 8.32-17
+- Let [:graph:], [:print:], and [:punct:] POSIX classes to handle Unicode
+  characters in UCP mode to match Perl behavior (bug #1400267)
+- Fix matching Unicode ranges in JIT mode (bug #1402288)
+
+* Wed Apr 27 2016 Petr Pisar <ppisar@redhat.com> - 8.32-16
 - Fix CVE-2015-2328 (infinite recursion compiling pattern with recursive
-  reference in a group with indefinite repeat) (bug #1330508)
+  reference in a group with indefinite repeat) (bug #1330509)
 - Fix CVE-2015-8385 (buffer overflow caused by named forward reference to
-  duplicate group number) (bug #1330508)
+  duplicate group number) (bug #1330509)
 - Fix CVE-2015-8386 (buffer overflow caused by lookbehind assertion)
-  (bug #1330508)
+  (bug #1330509)
 - Fix CVE-2015-3217 (stack overflow caused by mishandled group empty match)
-  (bug #1330508)
+  (bug #1330509)
 - Fix CVE-2015-5073 and CVE-2015-8388 (buffer overflow for forward reference
-  within backward assertion with excess closing parenthesis) (bug #1330508)
+  within backward assertion with excess closing parenthesis) (bug #1330509)
 - Fix CVE-2015-8391 (inefficient posix character class syntax check)
-  (bug #1330508)
+  (bug #1330509)
 - Fix CVE-2016-3191 (workspace overflow for (*ACCEPT) with deeply nested
-  parentheses) (bug #1330508)
+  parentheses) (bug #1330509)
 
 * Wed Apr 29 2015 Petr Pisar <ppisar@redhat.com> - 8.32-15
 - Fix compiling expression where start-anchored character with more than one
