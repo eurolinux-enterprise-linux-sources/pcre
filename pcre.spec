@@ -2,7 +2,7 @@
 #%%global rcversion RC1
 Name: pcre
 Version: 8.32
-Release: %{?rcversion:0.}14%{?rcversion:.%rcversion}%{?dist}
+Release: %{?rcversion:0.}15%{?rcversion:.%rcversion}%{?dist}
 %global myversion %{version}%{?rcversion:-%rcversion}
 Summary: Perl-compatible regular expression library
 Group: System Environment/Libraries
@@ -29,6 +29,24 @@ Patch7: pcre-8.34-Fix-range-check-in-JIT-path.patch
 # Fix unused memory usage on zero-repeat assertion condition, bug #1169797,
 # CVE-2014-8964, in upstream after 8.36
 Patch8: pcre-8.32-Fix-zero-repeat-assertion-condition-bug.patch
+# Fix compiling expression where start-anchored character with more than one
+# other case follows circumflex in multiline UTF mode, bug #1110621,
+# in upstream 8.36
+Patch9: pcre-8.32-Fix-bad-starting-data-when-char-with-more-than-one-o.patch
+# Fix character class with a literal quotation, bug #1111091,
+# upstream bug #1494, in upstream after 8.35
+Patch10: pcre-8.32-Fix-bad-compile-of-Qx-.-where-x-is-any-character.patch
+# Fix empty-matching possessive zero-repeat groups in interpreted mode,
+# bug #1119320, upstream bug #1500, in upstream after 8.35
+Patch11: pcre-8.33-Fix-empty-matching-possessive-zero-repeat-groups-bug.patch
+# Fix compiler crash for zero-repeated groups with a recursive back reference,
+# bug #1119356, upstream bug #1503, in upstream after 8.35
+Patch12: pcre-8.32-Fix-compiler-crash-misbehaviour-for-zero-repeated-gr.patch
+# Reset non-matched groups within capturing group up to forced match,
+# bug #1161597, in upstream after 8.36
+Patch13: pcre-8.32-Fix-bug-when-there-are-unset-groups-prior-to-ACCEPT-.patch
+# Fix static linking, bug #1217111, in upstream after 8.37-RC1
+Patch14: pcre-8.37-RC1-Fix-static-linking-issue-with-pkg-config.patch
 BuildRequires: readline-devel
 # New libtool to get rid of rpath
 BuildRequires: autoconf, automake, libtool
@@ -77,6 +95,12 @@ Utilities demonstrating PCRE capabilities like pcregrep or pcretest.
 %patch6 -p1 -b .vector_size
 %patch7 -p1 -b .jitted_range_check
 %patch8 -p1 -b .zero_repeat_assertion
+%patch9 -p1 -b .starting_data
+%patch10 -p1 -b .class_with_literal
+%patch11 -p1 -b .empty_zero_repeat_group
+%patch12 -p1 -b .compiler_crash_zero_group
+%patch13 -p1 -b .reset_groups
+%patch14 -p1 -b .static_linking
 # Because of rpath patch
 libtoolize --copy --force && autoreconf -vif
 # One contributor's name is non-UTF-8
@@ -133,7 +157,7 @@ make check VERBOSE=yes
 %{_mandir}/man3/*
 %{_bindir}/pcre-config
 %doc doc/*.txt doc/html
-%doc HACKING
+%doc HACKING pcredemo.c
 
 %files static
 %{_libdir}/*.a
@@ -146,6 +170,19 @@ make check VERBOSE=yes
 %{_mandir}/man1/pcretest.*
 
 %changelog
+* Wed Apr 29 2015 Petr Pisar <ppisar@redhat.com> - 8.32-15
+- Fix compiling expression where start-anchored character with more than one
+  other case follows circumflex in multiline UTF mode (bug #1110621)
+- Fix character class with a literal quotation (bug #1111091)
+- Fix empty-matching possessive zero-repeat groups in interpreted mode
+  (bug #1119320)
+- Fix compiler crash for zero-repeated groups with a recursive back reference
+  (bug #1119356)
+- Reset non-matched groups within capturing group up to forced match
+  (bug #1161597)
+- Fix static linking (bug #1217111)
+- Package pcredemo.c as a documentation for pcre-devel (bug #1217118)
+
 * Tue Dec 02 2014 Petr Pisar <ppisar@redhat.com> - 8.32-14
 - Fix CVE-2014-8964 (unused memory usage on zero-repeat assertion condition)
   (bug #1169797)
