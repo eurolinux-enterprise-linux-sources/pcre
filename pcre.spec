@@ -2,7 +2,7 @@
 #%%global rcversion RC1
 Name: pcre
 Version: 8.32
-Release: %{?rcversion:0.}15%{?rcversion:.%rcversion}%{?dist}
+Release: %{?rcversion:0.}15%{?rcversion:.%rcversion}%{?dist}.1
 %global myversion %{version}%{?rcversion:-%rcversion}
 Summary: Perl-compatible regular expression library
 Group: System Environment/Libraries
@@ -47,6 +47,41 @@ Patch12: pcre-8.32-Fix-compiler-crash-misbehaviour-for-zero-repeated-gr.patch
 Patch13: pcre-8.32-Fix-bug-when-there-are-unset-groups-prior-to-ACCEPT-.patch
 # Fix static linking, bug #1217111, in upstream after 8.37-RC1
 Patch14: pcre-8.37-RC1-Fix-static-linking-issue-with-pkg-config.patch
+# Fix checking whether a group could match an empty string, bug #1330508,
+# in upstream after 8.33, needed for
+# Fix-compile-time-loop-for-recursive-reference-within.patch
+Patch15: pcre-8.32-Fix-checking-whether-a-group-could-match-an-empty-st.patch
+# Fix CVE-2015-2328 (infinite recursion compiling pattern with recursive
+# reference in a group with indefinite repeat), bug #1330508,
+# upstream bug #1515, in upstream after 8.35
+Patch16: pcre-8.32-Fix-compile-time-loop-for-recursive-reference-within.patch
+# Fix duplicate names memory calculation error, bug #1330508,
+# in upstream after 8.37,
+# needed for Fix-buffer-overflow-for-named-references-in-situatio.patch
+Patch17: pcre-8.32-Fix-duplicate-names-memory-calculation-error.patch
+# Fix named forward reference to duplicate group number overflow bug,
+# bug #1330508, in upstream after 8.37,
+# needed for Fix-buffer-overflow-for-named-references-in-situatio.patch
+Patch18: pcre-8.32-Fix-named-forward-reference-to-duplicate-group-numbe.patch
+# Fix CVE-2015-8385 (buffer overflow caused by named forward reference to
+# duplicate group number), bug #1330508, in upstream after 8.37
+Patch19: pcre-8.32-Fix-buffer-overflow-for-named-references-in-situatio.patch
+# Fix CVE-2015-8386 (buffer overflow caused by lookbehind assertion),
+# bug #1330508, in upstream after 8.37
+Patch20: pcre-8.32-Fix-buffer-overflow-for-lookbehind-within-mutually-r.patch
+# Fix CVE-2015-3217 (stack overflow caused by mishandled group empty match),
+# bug #1330508, in upstream after 8.37
+Patch21: pcre-8.32-Fix-group-empty-match-bug.patch
+# Fix CVE-2015-5073 and CVE-2015-8388 (buffer overflow for forward reference
+# within backward assertion with excess closing parenthesis), bug #1330508,
+# in upstream after 8.37
+Patch22: pcre-8.32-Fix-buffer-overflow-for-forward-reference-within-bac.patch
+# Fix CVE-2015-8391 (inefficient posix character class syntax check),
+# bug #1330508, in upstream after 8.37
+Patch23: pcre-8.32-Fix-run-for-ever-bug-for-deeply-nested-sequences.patch
+# Fix CVE-2016-3191 (workspace overflow for (*ACCEPT) with deeply nested
+# parentheses), bug #1330508, in upstream after 8.38
+Patch24: pcre-8.32-Fix-workspace-overflow-for-ACCEPT-with-deeply-nested.patch
 BuildRequires: readline-devel
 # New libtool to get rid of rpath
 BuildRequires: autoconf, automake, libtool
@@ -101,6 +136,16 @@ Utilities demonstrating PCRE capabilities like pcregrep or pcretest.
 %patch12 -p1 -b .compiler_crash_zero_group
 %patch13 -p1 -b .reset_groups
 %patch14 -p1 -b .static_linking
+%patch15 -p1 -b .group_match_empty
+%patch16 -p1 -b .compiler_loop_recursive_reference
+%patch17 -p1 -b .duplicate_names_memory_calculation
+%patch18 -p1 -b .forward_reference_to_duplicate_group_number
+%patch19 -p1 -b .named_references_in_pqp
+%patch20 -p1 -b .lookbehind_within_mutally_recusive_subroutines
+%patch21 -p1 -b .group_empty_match
+%patch22 -p1 -b .CVE-2015-5073
+%patch23 -p1 -b .deeply_nested_bracket_colon
+%patch24 -p1 -b .accept_with_nested_parentheses
 # Because of rpath patch
 libtoolize --copy --force && autoreconf -vif
 # One contributor's name is non-UTF-8
@@ -170,6 +215,22 @@ make check VERBOSE=yes
 %{_mandir}/man1/pcretest.*
 
 %changelog
+* Wed Apr 27 2016 Petr Pisar <ppisar@redhat.com> - 8.32-15.1
+- Fix CVE-2015-2328 (infinite recursion compiling pattern with recursive
+  reference in a group with indefinite repeat) (bug #1330508)
+- Fix CVE-2015-8385 (buffer overflow caused by named forward reference to
+  duplicate group number) (bug #1330508)
+- Fix CVE-2015-8386 (buffer overflow caused by lookbehind assertion)
+  (bug #1330508)
+- Fix CVE-2015-3217 (stack overflow caused by mishandled group empty match)
+  (bug #1330508)
+- Fix CVE-2015-5073 and CVE-2015-8388 (buffer overflow for forward reference
+  within backward assertion with excess closing parenthesis) (bug #1330508)
+- Fix CVE-2015-8391 (inefficient posix character class syntax check)
+  (bug #1330508)
+- Fix CVE-2016-3191 (workspace overflow for (*ACCEPT) with deeply nested
+  parentheses) (bug #1330508)
+
 * Wed Apr 29 2015 Petr Pisar <ppisar@redhat.com> - 8.32-15
 - Fix compiling expression where start-anchored character with more than one
   other case follows circumflex in multiline UTF mode (bug #1110621)
